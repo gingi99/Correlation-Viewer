@@ -8,7 +8,7 @@ ui <- dashboardPage(title = "Correlation Viewer",
   dashboardHeader(title = "Correlation Viewer"),
   dashboardSidebar(
     sidebarMenu(
-      selectInput('correlation_type', "Correlation Type", choices = c("Pearson's correlation coefficient"), selected = "Pearson's correlation coefficient"),
+      selectInput('correlation_type', "Correlation Type", choices = c("Pearson"), selected = "Pearson"),
       numericInput('correlation_coef', "Correlation Coef", 0.8, min = 0.01, max = 1.0, step = 0.01),
       numericInput('sample_size', "Sample Size", 1000, min = 100, max = 100000, step = 100),
       actionButton("btn_go", "Go"),
@@ -21,7 +21,10 @@ ui <- dashboardPage(title = "Correlation Viewer",
   dashboardBody(
     tags$head(includeScript("google-analytics.js")),
     fluidRow(
-      box(title = "Scatter Plot", width = 12, solidHeader = T, status = "primary", plotOutput("scatter_plot"))
+      box(title = "Scatter Plot", width = 12, solidHeader = T, status = "primary", 
+          plotOutput("scatter_plot"),
+          downloadButton('downloadPlot','Download Plot')
+      )
     )
   )
 )
@@ -33,6 +36,7 @@ server <- function(input, output) {
   print("Initialize Start")
   values <- reactiveValues()
   values$data <- data.frame(stringsAsFactors = F)
+  values$plot <- NULL
   
   # --------------------------------
   # data load
@@ -47,16 +51,27 @@ server <- function(input, output) {
     values$data <- data.frame(x = y1, y = y2, stringsAsFactors = F)
   })
   
+  # --------------------------------
   # scatter plot
   output$scatter_plot = renderPlot({
     if(NROW(values$data) > 0){
-      ggplot(values$data, aes(x = x, y = y)) + 
+      values$plot <- ggplot(values$data, aes(x = x, y = y)) + 
         geom_point(alpha = input$plot_alpha, size = input$plot_size) + 
         stat_smooth(method = "lm", se = FALSE, colour = "black", size = 1) + 
         labs(title = paste0("Cor Coef:", round(cor(values$data$x, values$data$y), 5))) + theme_bw()
+      values$plot
     }
   })
   
+  # --------------------------------
+  output$downloadPlot <- downloadHandler(
+    filename = function(){
+      paste("plot",'.png',sep='')
+    },
+    content = function(file){
+      ggsave(file, plot = values$plot)
+    }
+  )
 }
 
 # Run the application 
