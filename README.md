@@ -3,4 +3,4 @@ A Shiny Application for Creating and Visualizing Data with A Constant Correlatio
 
 ![image](docs/image.png)
 
-https://gingi99.shinyapps.io/CorrelationViewer/
+https://okiyuki.shinyapps.io/CorrelationViewer/
